@@ -12,6 +12,7 @@ const props = defineProps([
   "depth",
   "path",
   "currentSelection",
+  "isLast", // New prop to determine line height
 ]);
 // EMITS
 const emit = defineEmits(["select", "delete", "node-drag-start", "node-drop"]);
@@ -77,8 +78,21 @@ function onDragLeave() {
 
 <template>
   <div class="tree-node select-none relative">
+    <!-- Vertical Line -->
     <div
-      class="flex items-center py-1 cursor-pointer transition-colors group"
+      v-if="depth > 0"
+      class="absolute -left-4 w-px bg-gray-400 top-0"
+      :class="isLast ? 'h-4' : 'h-full'"
+    ></div>
+
+    <!-- Horizontal Line -->
+    <div
+      v-if="depth > 0"
+      class="absolute -left-4 w-4 h-px bg-gray-400 top-4"
+    ></div>
+
+    <div
+      class="flex items-center py-1 cursor-pointer transition-colors group h-8"
       :class="[
         isSelected ? 'text-blue-600 font-bold' : 'text-gray-800',
         isDraggingOver ? 'bg-blue-50' : '',
@@ -90,9 +104,6 @@ function onDragLeave() {
       @dragover.prevent="onDragOver"
       @dragleave="onDragLeave"
     >
-      <!-- Connector Line (Horizontal) for children -->
-      <div v-if="depth > 0" class="w-4 h-px bg-gray-400 mr-1"></div>
-
       <!-- Toggler / Icon -->
       <span
         v-if="hasChildren"
@@ -135,12 +146,6 @@ function onDragLeave() {
       <!-- Label -->
       <span class="mr-2 text-base">{{ label }}</span>
 
-      <!-- Value (if leaf) -->
-      <!-- <span v-if="!hasChildren" class="text-sm text-gray-500 mr-2">
-        : {{ formatValue(node) }}
-      </span> -->
-      <!-- Image doesn't show values in the tree, only keys. I will hide values to match image exactly. -->
-
       <!-- Delete Button (Red Circle Minus) -->
       <button
         class="ml-auto mr-2 text-red-500 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -158,18 +163,16 @@ function onDragLeave() {
     </div>
 
     <!-- Children Container -->
-    <div
-      v-if="isOpen && hasChildren"
-      class="ml-[1.1rem] pl-0 border-l border-gray-400 flex flex-col"
-    >
+    <div v-if="isOpen && hasChildren" class="ml-4 pl-0 flex flex-col">
       <TreeNode
-        v-for="(childValue, childKey) in node"
+        v-for="(childValue, childKey, index) in node"
         :key="childKey"
         :label="childKey"
         :node="childValue"
         :depth="depth + 1"
         :path="[...path, childKey]"
         :current-selection="currentSelection"
+        :is-last="index === Object.keys(node).length - 1"
         @select="$emit('select', $event)"
         @delete="$emit('delete', $event)"
         @node-drag-start="$emit('node-drag-start', $event)"

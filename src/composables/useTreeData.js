@@ -16,12 +16,8 @@ const DEFAULT_DATA = {
       is_active: true,
       is_open_for_signup: true,
       name: { bn: "অটো", en: "Auto" },
-      verify_otp_for_signup: false,
     },
-    settings: {
-      max_distance: 10,
-      currency: "BDT",
-    },
+    verify_otp_for_signup: false,
   },
 };
 

@@ -79,11 +79,11 @@ const handleDrop = (targetPath) => {
 
 <template>
   <div
-    class="h-screen flex flex-col font-sans text-gray-800 antialiased bg-gray-100"
+    class="h-screen flex flex-col font-sans text-gray-800 antialiased bg-white p-8"
   >
-    <TreeHeader @open-import="showImportModal = true" />
+    <!-- <TreeHeader @open-import="showImportModal = true" /> -->
 
-    <div class="flex flex-1 overflow-hidden">
+    <div class="flex flex-1 overflow-hidden gap-8">
       <TreeSidebar
         :tree-data="treeData"
         :selected-path="selectedPath"

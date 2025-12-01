@@ -8,15 +8,14 @@ defineProps({
 </script>
 
 <template>
-  <div
-    class="p-4 border-b text-sm text-gray-600 bg-gray-50 h-14 flex items-center shadow-inner"
-  >
-    <span class="font-mono text-gray-700">
-      <span v-if="!breadcrumbString">Select a node to see its path...</span>
+  <div class="mb-4">
+    <h1 class="text-3xl text-black font-normal">
+      <span v-if="!breadcrumbString">Select a node...</span>
       <span v-else>
-        <span class="font-bold text-blue-600">auto</span> >
-        {{ breadcrumbString }}
+        <span>auto</span>
+        <span class="mx-2">&gt;</span>
+        <span>{{ breadcrumbString.split(" > ").join(" > ") }}</span>
       </span>
-    </span>
+    </h1>
   </div>
 </template>

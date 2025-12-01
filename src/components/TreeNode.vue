@@ -1,8 +1,6 @@
 <script setup>
 import { ref, computed } from "vue";
 
-// Use 'defineOptions' or direct component setup for recursion
-// If using Vue CLI/Vite setup, ensure the component name matches the file name for recursion.
 defineOptions({
   name: "TreeNode",
 });
@@ -15,14 +13,14 @@ const props = defineProps([
   "path",
   "currentSelection",
 ]);
-// EMITS: select, delete, and DND events
+// EMITS
 const emit = defineEmits(["select", "delete", "node-drag-start", "node-drop"]);
 
 // STATE
-const isOpen = ref(false); // Manages expand/collapse
-const isDraggingOver = ref(false); // Manages visual drop indicator
+const isOpen = ref(true); // Default to open to match image vibe, or false. Image shows expanded.
+const isDraggingOver = ref(false);
 
-// COMPUTED LOGIC
+// COMPUTED
 const hasChildren = computed(() => {
   return (
     props.node &&
@@ -32,7 +30,6 @@ const hasChildren = computed(() => {
 });
 
 const isSelected = computed(() => {
-  // Deep comparison of arrays to determine selection
   return JSON.stringify(props.path) === JSON.stringify(props.currentSelection);
 });
 
@@ -57,9 +54,8 @@ function formatValue(val) {
   return val;
 }
 
-// --- DND Handlers ---
+// DND
 function onDragStart(event) {
-  // Store the source path on the component state and bubble up to App.vue
   event.dataTransfer.effectAllowed = "move";
   event.dataTransfer.setData("application/json", JSON.stringify(props.path));
   emit("node-drag-start", props.path);
@@ -67,7 +63,6 @@ function onDragStart(event) {
 
 function onDrop(event) {
   isDraggingOver.value = false;
-  // Bubble up the target path (which is the current node's path)
   emit("node-drop", props.path);
 }
 
@@ -81,18 +76,13 @@ function onDragLeave() {
 </script>
 
 <template>
-  <div class="tree-node select-none">
+  <div class="tree-node select-none relative">
     <div
-      class="flex items-center py-1 cursor-pointer transition-colors"
+      class="flex items-center py-1 cursor-pointer transition-colors group"
       :class="[
-        isSelected
-          ? 'bg-blue-200 text-blue-800 font-semibold'
-          : 'hover:bg-gray-100',
-        isDraggingOver
-          ? 'border-2 border-dashed border-blue-500'
-          : 'border-2 border-transparent',
+        isSelected ? 'text-blue-600 font-bold' : 'text-gray-800',
+        isDraggingOver ? 'bg-blue-50' : '',
       ]"
-      :style="{ paddingLeft: `${depth * 20}px` }"
       draggable="true"
       @click.stop="onSelect"
       @dragstart.stop="onDragStart"
@@ -100,31 +90,78 @@ function onDragLeave() {
       @dragover.prevent="onDragOver"
       @dragleave="onDragLeave"
     >
+      <!-- Connector Line (Horizontal) for children -->
+      <div v-if="depth > 0" class="w-4 h-px bg-gray-400 mr-1"></div>
+
+      <!-- Toggler / Icon -->
       <span
         v-if="hasChildren"
         @click.stop="toggle"
-        class="mr-2 transform transition-transform text-gray-500 text-xs"
-        :class="{ 'rotate-90': isOpen }"
+        class="mr-1 transform transition-transform text-gray-500 cursor-pointer"
       >
-        ▶
+        <!-- Chevron Down -->
+        <svg
+          v-if="isOpen"
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M19 9l-7 7-7-7"
+          ></path>
+        </svg>
+        <!-- Chevron Right -->
+        <svg
+          v-else
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 5l7 7-7 7"
+          ></path>
+        </svg>
       </span>
       <span v-else class="w-5"></span>
-      <span class="mr-2 text-sm">{{ label }}</span>
 
-      <span v-if="!hasChildren" class="text-xs text-gray-400 mr-2">
+      <!-- Label -->
+      <span class="mr-2 text-base">{{ label }}</span>
+
+      <!-- Value (if leaf) -->
+      <!-- <span v-if="!hasChildren" class="text-sm text-gray-500 mr-2">
         : {{ formatValue(node) }}
-      </span>
+      </span> -->
+      <!-- Image doesn't show values in the tree, only keys. I will hide values to match image exactly. -->
 
+      <!-- Delete Button (Red Circle Minus) -->
       <button
-        class="ml-auto mr-2 text-red-500 hover:text-red-700 font-bold text-lg"
+        class="ml-auto mr-2 text-red-500 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
         @click.stop="onDelete"
         title="Delete Node"
       >
-        &#x2716;
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fill-rule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-7.414 0a1 1 0 000 2l7.414 0a1 1 0 00-2z"
+            clip-rule="evenodd"
+          ></path>
+        </svg>
       </button>
     </div>
 
-    <div v-if="isOpen && hasChildren" class="relative">
+    <!-- Children Container -->
+    <div
+      v-if="isOpen && hasChildren"
+      class="ml-[1.1rem] pl-0 border-l border-gray-400 flex flex-col"
+    >
       <TreeNode
         v-for="(childValue, childKey) in node"
         :key="childKey"

@@ -21,14 +21,10 @@ const handleDrop = (path) => emit("node-drop", path);
 </script>
 
 <template>
-  <aside
-    class="w-1/3 min-w-[300px] border-r flex flex-col bg-white overflow-y-auto"
-  >
-    <div class="p-4">
-      <h2 class="font-bold mb-4 uppercase text-xs text-gray-500 tracking-wider">
-        Tree
-      </h2>
+  <aside class="w-1/3 min-w-[300px] flex flex-col bg-white overflow-y-auto">
+    <h2 class="text-2xl font-normal mb-4 text-black">Tree</h2>
 
+    <div class="border rounded-lg p-4 h-full overflow-auto">
       <TreeNode
         v-for="(value, key) in treeData"
         :key="key"

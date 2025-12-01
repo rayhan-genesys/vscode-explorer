@@ -49,12 +49,6 @@ function onDelete() {
   emit("delete", props.path);
 }
 
-function formatValue(val) {
-  if (typeof val === "string") return `"${val}"`;
-  if (typeof val === "boolean") return val ? "true" : "false";
-  return val;
-}
-
 // DND
 function onDragStart(event) {
   event.dataTransfer.effectAllowed = "move";

@@ -14,12 +14,7 @@ export function useTreeSelection() {
   const breadcrumbString = computed(() => {
     if (selectedPath.value.length === 0) return "";
 
-    const pathForBreadcrumb =
-      selectedPath.value.length > 1
-        ? selectedPath.value.slice(1)
-        : selectedPath.value;
-
-    return pathForBreadcrumb.join(" > ");
+    return selectedPath.value.join(" > ");
   });
 
   return {

@@ -142,7 +142,7 @@ function onDragLeave() {
 
       <!-- Delete Button (Red Circle Minus) -->
       <button
-        class="ml-auto mr-2 text-red-500 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+        class="ml-auto mr-2 text-red-500 hover:text-red-600 transition-opacity"
         @click.stop="onDelete"
         title="Delete Node"
       >

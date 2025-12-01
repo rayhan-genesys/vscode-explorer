@@ -104,5 +104,88 @@ export function useTreeData() {
     deleteNode,
     moveNode,
     getNodeByPath: (path) => getNodeByPath(treeData.value, path),
+    renameNode: (path, newName) => {
+      const parentPath = path.slice(0, -1);
+      const oldName = path[path.length - 1];
+      const parentNode =
+        path.length === 1
+          ? treeData.value
+          : getNodeByPath(treeData.value, parentPath);
+
+      if (Array.isArray(parentNode)) {
+        // Arrays don't have keys to rename, but if we treated indices as keys...
+        // Actually, for arrays, "renaming" might not make sense unless it's an object inside.
+        // But our path logic uses indices for arrays.
+        // If the user wants to rename a key inside an object in an array, the path would point to that key.
+        // If path points to an array index, we can't "rename" the index.
+        return {
+          success: false,
+          message: "Cannot rename array items directly.",
+        };
+      }
+
+      if (parentNode[newName] !== undefined) {
+        return { success: false, message: "Key already exists." };
+      }
+
+      // Preserve order if possible (ES2015+ preserves string key insertion order)
+      const keys = Object.keys(parentNode);
+      const newObject = {};
+      keys.forEach((key) => {
+        if (key === oldName) {
+          newObject[newName] = parentNode[oldName];
+        } else {
+          newObject[key] = parentNode[key];
+        }
+      });
+
+      // We need to replace the parent node's content with this new ordered object
+      // But we can't easily replace "this" node if it's the root.
+      if (path.length === 1) {
+        // Root rename? Usually root is just the object.
+        // If we are renaming a top-level key:
+        delete treeData.value[oldName];
+        treeData.value[newName] = parentNode[oldName];
+        // Note: This loses order at root level if we just delete/add.
+        // To preserve root order, we'd need to reconstruct treeData.value.
+        // Let's try to reconstruct.
+        const newRoot = {};
+        Object.keys(treeData.value).forEach((k) => {
+          if (k === oldName) newRoot[newName] = treeData.value[oldName];
+          else newRoot[k] = treeData.value[k];
+        });
+        treeData.value = newRoot;
+      } else {
+        // For nested objects, we need to set the parent's value to the new object
+        // But `getNodeByPath` returns a reference to the *value* of the parent, which is `parentNode`.
+        // We can modify `parentNode` in place.
+        // However, to preserve key order, we have to delete all keys and re-add them?
+        // Or just accept that order might change?
+        // Let's try to preserve order by re-assigning properties.
+
+        // 1. Clear parent
+        keys.forEach((k) => delete parentNode[k]);
+        // 2. Re-add
+        Object.assign(parentNode, newObject);
+      }
+
+      return { success: true };
+    },
+    insertNode: (path, key, value) => {
+      const targetNode = getNodeByPath(treeData.value, path);
+      if (typeof targetNode !== "object" || targetNode === null) {
+        return { success: false, message: "Cannot insert into non-object." };
+      }
+
+      if (Array.isArray(targetNode)) {
+        targetNode.push(value);
+      } else {
+        if (targetNode[key] !== undefined) {
+          return { success: false, message: "Key already exists." };
+        }
+        targetNode[key] = value;
+      }
+      return { success: true };
+    },
   };
 }

@@ -12,7 +12,14 @@ defineProps({
   },
 });
 
-const emit = defineEmits(["select", "delete", "node-drag-start", "node-drop"]);
+const emit = defineEmits([
+  "select",
+  "delete",
+  "node-drag-start",
+  "node-drop",
+  "rename",
+  "insert-request",
+]);
 
 const handleSelect = (path) => emit("select", path);
 const requestDelete = (path) => emit("delete", path);
@@ -35,6 +42,8 @@ const handleDrop = (path) => emit("node-drop", path);
         :current-selection="selectedPath"
         @select="handleSelect"
         @delete="requestDelete"
+        @rename="$emit('rename', $event)"
+        @insert-request="$emit('insert-request', $event)"
         @node-drag-start="handleDragStart"
         @node-drop="handleDrop"
       />

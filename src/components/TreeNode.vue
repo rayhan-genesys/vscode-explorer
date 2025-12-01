@@ -15,13 +15,21 @@ const props = defineProps([
   "isLast", // New prop to determine line height
 ]);
 // EMITS
-const emit = defineEmits(["select", "delete", "node-drag-start", "node-drop"]);
+const emit = defineEmits([
+  "select",
+  "delete",
+  "node-drag-start",
+  "node-drop",
+  "rename",
+  "insert-request",
+]);
 
 // STATE
 const isOpen = ref(true); // Default to open to match image vibe, or false. Image shows expanded.
 const isDraggingOver = ref(false);
-
-// COMPUTED
+const isRenaming = ref(false);
+const renameName = ref("");
+const renameInput = ref(null);
 const hasChildren = computed(() => {
   return (
     props.node &&
@@ -67,6 +75,32 @@ function onDragOver() {
 
 function onDragLeave() {
   isDraggingOver.value = false;
+}
+
+// RENAME
+function startRename() {
+  renameName.value = props.label;
+  isRenaming.value = true;
+  // Focus next tick
+  setTimeout(() => {
+    renameInput.value?.focus();
+  }, 0);
+}
+
+function cancelRename() {
+  isRenaming.value = false;
+}
+
+function confirmRename() {
+  if (renameName.value && renameName.value !== props.label) {
+    emit("rename", { path: props.path, newName: renameName.value });
+  }
+  isRenaming.value = false;
+}
+
+// INSERT
+function onInsert() {
+  emit("insert-request", props.path);
 }
 </script>
 
@@ -137,23 +171,82 @@ function onDragLeave() {
       </span>
       <span v-else class="w-5"></span>
 
-      <!-- Label -->
-      <span class="mr-2 text-base">{{ label }}</span>
+      <!-- Label or Rename Input -->
+      <template v-if="isRenaming">
+        <input
+          ref="renameInput"
+          v-model="renameName"
+          @click.stop
+          @keydown.enter="confirmRename"
+          @keydown.esc="cancelRename"
+          @blur="cancelRename"
+          class="mr-2 text-base border border-blue-500 rounded px-1 py-0.5 focus:outline-none"
+        />
+      </template>
+      <span v-else class="mr-2 text-base">{{ label }}</span>
 
-      <!-- Delete Button (Red Circle Minus) -->
-      <button
-        class="ml-auto mr-2 text-red-500 hover:text-red-600 transition-opacity"
-        @click.stop="onDelete"
-        title="Delete Node"
+      <!-- Actions Group -->
+      <div
+        class="ml-auto flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity"
       >
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path
-            fill-rule="evenodd"
-            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-7.414 0a1 1 0 000 2l7.414 0a1 1 0 00-2z"
-            clip-rule="evenodd"
-          ></path>
-        </svg>
-      </button>
+        <!-- Insert Button (Plus) - Only for Objects/Arrays -->
+        <button
+          v-if="hasChildren || (node && typeof node === 'object')"
+          class="text-green-500 hover:text-green-600"
+          @click.stop="onInsert"
+          title="Insert Node"
+        >
+          <svg
+            class="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4v16m8-8H4"
+            ></path>
+          </svg>
+        </button>
+
+        <!-- Rename Button (Pencil) -->
+        <button
+          class="text-blue-500 hover:text-blue-600"
+          @click.stop="startRename"
+          title="Rename Node"
+        >
+          <svg
+            class="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+            ></path>
+          </svg>
+        </button>
+
+        <!-- Delete Button (Red Circle Minus) -->
+        <button
+          class="text-red-500 hover:text-red-600"
+          @click.stop="onDelete"
+          title="Delete Node"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-7.414 0a1 1 0 000 2l7.414 0a1 1 0 00-2z"
+              clip-rule="evenodd"
+            ></path>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <!-- Children Container -->
@@ -169,6 +262,8 @@ function onDragLeave() {
         :is-last="index === Object.keys(node).length - 1"
         @select="$emit('select', $event)"
         @delete="$emit('delete', $event)"
+        @rename="$emit('rename', $event)"
+        @insert-request="$emit('insert-request', $event)"
         @node-drag-start="$emit('node-drag-start', $event)"
         @node-drop="$emit('node-drop', $event)"
       />

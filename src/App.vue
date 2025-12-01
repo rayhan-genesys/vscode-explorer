@@ -10,16 +10,20 @@ import TreeBreadcrumbs from "./components/TreeBreadcrumbs.vue";
 import JsonViewer from "./components/JsonViewer.vue";
 import ImportModal from "./components/ImportModal.vue";
 import DeleteModal from "./components/DeleteModal.vue";
+import InsertModal from "./components/InsertModal.vue";
 
 // Composables
-const { treeData, setTreeData, deleteNode, moveNode } = useTreeData();
+const { treeData, setTreeData, deleteNode, moveNode, renameNode, insertNode } =
+  useTreeData();
 const { selectedPath, selectPath, clearSelection, breadcrumbString } =
   useTreeSelection();
 
 // Local State
 const showImportModal = ref(false);
 const showDeleteModal = ref(false);
+const showInsertModal = ref(false);
 const pathToDelete = ref(null);
+const pathToInsert = ref(null);
 const draggedPath = ref(null);
 
 // --- ACTIONS ---
@@ -75,6 +79,32 @@ const handleDrop = (targetPath) => {
 
   draggedPath.value = null;
 };
+
+// 5. Rename
+const handleRename = ({ path, newName }) => {
+  const result = renameNode(path, newName);
+  if (!result.success) {
+    alert(`❌ Rename failed: ${result.message}`);
+  }
+};
+
+// 6. Insert
+const handleInsertRequest = (path) => {
+  pathToInsert.value = path;
+  showInsertModal.value = true;
+};
+
+const handleInsertConfirm = ({ key, value }) => {
+  if (pathToInsert.value) {
+    const result = insertNode(pathToInsert.value, key, value);
+    if (!result.success) {
+      alert(`❌ Insert failed: ${result.message}`);
+    } else {
+      showInsertModal.value = false;
+      pathToInsert.value = null;
+    }
+  }
+};
 </script>
 
 <template>
@@ -89,6 +119,8 @@ const handleDrop = (targetPath) => {
         :selected-path="selectedPath"
         @select="handleSelect"
         @delete="requestDelete"
+        @rename="handleRename"
+        @insert-request="handleInsertRequest"
         @node-drag-start="handleDragStart"
         @node-drop="handleDrop"
       />
@@ -110,6 +142,13 @@ const handleDrop = (targetPath) => {
       :path-to-delete="pathToDelete"
       @close="showDeleteModal = false"
       @confirm="executeDelete"
+    />
+
+    <InsertModal
+      v-if="showInsertModal"
+      :parent-path="pathToInsert"
+      @close="showInsertModal = false"
+      @confirm="handleInsertConfirm"
     />
   </div>
 </template>
